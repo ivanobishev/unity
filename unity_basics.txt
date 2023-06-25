@@ -1,0 +1,210 @@
+Index:
+	Setup.
+	Layout.
+	Moving a game object.
+	Cinemachine follow camera.
+	Collisions.
+	Timers and Tags.
+	Rotating object.
+	Advices.
+
+
+
+Setup.
+
+Download Unity and Visual Studio Code.
+You can download Blender to create 3D models.
+
+
+
+Layout.
+
+On the left we have hierarchy, where all game objects are.
+On the right we have the inspector, where game objects components are shown.
+At the bottom we have the Project tab, with the Assets folder.
+
+Right click on hiearchy -> 3D Object -> Cube.
+Create a Player, create a Player Material in Assets to change its colour.
+Create a ground object as well.
+
+Edit -> Preferences -> External tools -> External Script Editor: VSC.
+In Visual Studio Code, install the C# extension, also Unity Code Snippets.
+
+
+
+Moving a game object.
+
+Create an object and attach a script to it, to make it move every frame:
+-----------------------------
+public class Mover : MonoBehaviour
+{
+    void Update()
+    {
+        transform.Translate(0.01f, 0, 0);
+    }
+}
+-----------------------------
+
+
+Moving our character dynamically with keyboard inputs:
+-----------------------------
+void Update()
+{
+    float xValue = Input.GetAxis("Horizontal");
+    float zValue = Input.GetAxis("Vertical");
+    transform.Translate(xValue, 0, zValue);
+}
+-----------------------------
+To see more inputs, Edit -> Project Settings -> Input Manager.
+You can notice a speed problem...
+
+Time.deltaTime tells us how long each frame took to execute.
+When we multiply something by Time.deltaTime, it makes our game frame rate
+independent.
+You can change the speed:
+-----------------------------
+float moveSpeed = 10f;
+
+void Update()
+{
+    float xValue = Input.GetAxis("Horizontal") * Time.deltaTime * moveSpeed;
+    float zValue = Input.GetAxis("Vertical") * Time.deltaTime * moveSpeed;
+    transform.Translate(xValue, 0, zValue);
+}
+-----------------------------
+
+
+
+Cinemachine follow camera.
+
+In the Hierarchy tab we can see the Main Camera.
+
+Cinemachine is a package that lets us manage multiple cameras in our scene.
+Easily creates rules for our cameras.
+
+Install Cinemachine from Window -> Package Manager.
+Click on the Main Camera, in the Inspector click on Add Component,
+choose CinemachineBrain.
+Create a Virtual Camera object and name it Virtual Follow Camera.
+Place the new camera in a good spot, make it follow the Player.
+Change the Body of the Virtual Follow Camera to Framing Transposer,
+you can change the Camera Distance in the Body as well.
+
+
+
+Collisions.
+
+Put walls so that we don't escape from the ground game object.
+We can check and uncheck Mesh Renderer and Box Collider components.
+Add the component Rigidbody to the Player otherwise we'll move through walls.
+
+If we suffer crazy movements when we bump into walls, in the component
+Rigidbody, Constraints, freeze rotation in X, Y and Z.
+
+Create a script called ObjectHit.cs, attach it to the 4 walls:
+-----------------------------
+public class ObjectHit : MonoBehaviour
+{
+    private void OnCollisionEnter(Collision other)
+    {
+        Debug.Log("Bumped into a wall.");
+        GetComponent<MeshRendered>().material.color = Color.red;
+    }
+}
+-----------------------------
+
+
+To count hits amount, create a script attached to our Player, called CarDamage:
+-----------------------------
+public class CarDamage : MonoBehaviour
+{
+    int hits = 0;
+
+    private void OnCollisionEnter(Collision other)
+    {
+        hits++;
+        Debug.Log("Number of hits: " + hits);
+    }
+}
+-----------------------------
+
+
+
+Timers and Tags.
+
+Create an object in the air, let's make it fall after 5 seconds.
+You can name the object Dropper, it's okay if they share the name.
+Create an script called Dropper.cs:
+-----------------------------
+public class Dropper : MonoBehaviour
+{
+    MeshRenderer renderer;
+    Rigidbody rigidbody;
+
+    float timeToWait = 5f;
+
+    void Start()
+    {
+        renderer = GetComponent<MeshRenderer>();
+        rigidbody = GetComponent<Rigidbody>();
+
+        renderer.enabled = false;
+        rigidbody.useGravity = false;
+    }
+
+    void Update()
+    {
+        if (Time.time > timeToWait)
+        {
+            Debug.Log(timeToWait + " seconds has elapsed.");
+            renderer.enabled = true;
+            rigidbody.useGravity = true;
+        }
+    }
+}
+-----------------------------
+
+
+Give the ObjectHit script to the object, when it falls, it turns red,
+how can we fix it? We want to become red when hit by the player,
+hence we use a Tag.
+
+Click on our player, in the inspector tab we can see it's untagged, select one.
+
+ObjectsHit.cs:
+-----------------------------
+private void OnCollisionEnter(Collision other)
+{
+    if (other.gameObject.tag == "Player")
+    {
+        GetComponent<MeshRenderer>().material.color = Color.red;
+    }
+}
+-----------------------------
+
+
+
+Rotating object.
+
+Create a game object called Spinner, attach an script to it with the same name.
+
+-----------------------------
+public class Spinner : MonoBehaviour
+{
+    void Update()
+    {
+        transform.Rotate(0, 0.5, 0);
+    }
+}
+-----------------------------
+
+
+
+Advices.
+
+Create a folder called Prefabs and add as many game objects as you can.
+In this way if you change a car part, it's updated for another cars.
+You can drag from Prefabs to the game screen and add objects easily.
+
+You can learn to use SerializeField, the problem is it overrides the scripts.
+SerializeField makes the variable for example to appear in the Inspector.
